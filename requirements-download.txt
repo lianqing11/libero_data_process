@@ -1,0 +1,4 @@
+# Optional environment for tools/hf_manifest.py and tools/probe_route.py
+huggingface_hub>=1,<2
+httpx>=0.27,<1
+requests>=2.31,<3
