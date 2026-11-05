@@ -7,3 +7,4 @@ __pycache__/
 /downloads/
 /logs/
 .env
+/evaluation_outputs/

@@ -6,6 +6,8 @@
 
 脚本完成：**原始 LIBERO demonstration → 仿真回放及可选扰动 → 一条轨迹一个 HDF5 → 训练数据清单 `meta.json`**。脚本不依赖本仓库其他 Python 模块，但需要 LIBERO/robosuite 仿真依赖。
 
+2026-11-05 补充：仓库已加入独立评测入口、模型源码和 [下载—转换—评测完整说明](libero_evaluation.md)。评测直接读取仿真任务/初始状态与模型 checkpoint，训练 HDF5 用于训练。
+
 ## 1. 要准备哪几类数据
 
 | 资源 | 来源 | 用途 |

@@ -1,0 +1,79 @@
+{
+  "source_project": "x_vla_ic/x_vla_fast",
+  "source_git_head": "f077a3ba93aa577d57c85cb2076939565d4f3c89",
+  "note": "Hashes record source working-tree files before portability fixes; HEAD alone does not represent local edits.",
+  "files": [
+    {
+      "path": "models/action_expert.py",
+      "source_sha256": "0f81162b8e6218ee2045dde416ecaa10fdc372d38c45c04bd98ae78b3077bf2d"
+    },
+    {
+      "path": "models/proprio_projector.py",
+      "source_sha256": "95661fa08a2df422ebc592bc28e35639bc6a3257d2c417998cd163dbbbbcb909"
+    },
+    {
+      "path": "models/vla_factory.py",
+      "source_sha256": "16b2ec3dac4fa7c39e0ff8c94dae426be99cb99b221887722903592dd69c3c50"
+    },
+    {
+      "path": "models/__init__.py",
+      "source_sha256": "3515b7ba4d1316d649505c6211fe5113145eb139468625288211de5ef2e5d1c4"
+    },
+    {
+      "path": "models/modeling_xvla.py",
+      "source_sha256": "33019b3d1cb1feebe6d36f901b4c5fc96703dbf0a2c69b93f093755c6c2fbb32"
+    },
+    {
+      "path": "models/processing_xvla.py",
+      "source_sha256": "635c257c24588f7111b917810da6153c0a442fe1ae4eee62783d101ecb45c4db"
+    },
+    {
+      "path": "models/action_hub.py",
+      "source_sha256": "efc76a5199c5ee3dbcaeef7dc85458261bb8618b693b461190d52add39500286"
+    },
+    {
+      "path": "models/configuration_xvla.py",
+      "source_sha256": "990862da76293dac3ac313d357425e017e22d709e29baba363d819311d31d044"
+    },
+    {
+      "path": "models/mot_forward.py",
+      "source_sha256": "baf32d53eed0a908ec695ef60af0141dae09afe726c6cea5d095055bb2179c82"
+    },
+    {
+      "path": "models/hf_local.py",
+      "source_sha256": "eaaf3db224383a2e93342c709387fb9bb2d26c73b90ac28e371c5a91ac6e1406"
+    },
+    {
+      "path": "models/openvla/configuration_openvla.py",
+      "source_sha256": "6372be7882c5ba8b559e3dbcb6416f8586fa0955f178de1705f83529d791e083"
+    },
+    {
+      "path": "models/openvla/tokenization_openvla.py",
+      "source_sha256": "6deddc44649d6c7da8851ac09dd68e3f3742246412c7ac8b058d1105ff7ec105"
+    },
+    {
+      "path": "models/openvla/modeling_openvla.py",
+      "source_sha256": "14ad6a13a2160c4f6dfe59c0ad2caf81cd9578975eba284cac3a6c48ccaa2a64"
+    },
+    {
+      "path": "evaluation/scripts/evaluate_libero.py",
+      "source_sha256": "3ec4a10854e6fac0829a32c0c03572eefe205332aace745db7614023536388ab"
+    },
+    {
+      "path": "evaluation/libero/libero_client.py",
+      "source_sha256": "0b22cec9ca1bc23ea25be38b8109c3fae88228a9c87f5fea6c0c7b0405271b2e"
+    },
+    {
+      "path": "evaluation/libero/libero_plus_client.py",
+      "source_sha256": "f027d0ea6f975c1bdca33775acfdaf56ec41a301e69e7cabdc7a552ef9c106ec"
+    },
+    {
+      "path": "evaluation/libero/runtime_perturbations.py",
+      "source_sha256": "f12e0d57b190ec29a36f7d9b56ea393c79eaee240609c6023c51fbc58959d4ac"
+    },
+    {
+      "path": "evaluation/libero/rel2abs.py",
+      "source_sha256": "876cab1373f7e7f3695773821ec411ec182e67427f062c91715a3e1c60c30140"
+    }
+  ]
+}

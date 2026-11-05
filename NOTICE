@@ -1,0 +1,12 @@
+Evaluation and model sources were extracted from x_vla_ic/x_vla_fast.
+Source file hashes and the checkout revision are recorded in
+docs/evaluation_source_manifest.json. Existing copyright notices are retained.
+The source project's Apache License 2.0 is included as LICENSE.
+
+Local changes add a portable CLI, isolated LIBERO configuration, configurable
+model roots, result manifests, coverage validation, JSON/JSONL output,
+exception cleanup and camera observation refresh fixes. See
+docs/libero_evaluation.md for behavior and verification limits.
+
+LIBERO, LIBERO-Plus, simulator assets, datasets and pretrained weights are
+external resources and remain subject to their respective licenses.

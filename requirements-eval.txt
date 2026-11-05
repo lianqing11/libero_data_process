@@ -1,0 +1,14 @@
+# Install in a dedicated environment with a matching torch/torchvision CUDA build.
+-r requirements.txt
+transformers==4.57.3
+accelerate>=1.0,<2
+scipy>=1.10,<2
+pillow>=10
+imageio[ffmpeg]>=2.31
+json-numpy>=2
+requests>=2.31
+mmengine>=0.10,<1
+fastapi>=0.100
+uvicorn>=0.23
+# Separately install: torch, torchvision, opencv-python, compatible robosuite,
+# mujoco and LIBERO/Plus. Optional: peft (LoRA), flash-attn (if config enables it).

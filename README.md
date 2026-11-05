@@ -1,8 +1,10 @@
 # libero_data_process
 
-将原始 LIBERO demonstration 转换为双视角、绝对动作轨迹的训练 HDF5，并生成 LIBERO-Plus camera/action 等扰动数据。
+将原始 LIBERO demonstration 转换为双视角、绝对动作轨迹的训练 HDF5，生成 LIBERO-Plus camera/action 等扰动数据，并使用本地 VLA checkpoint 运行普通 LIBERO、Plus suites 和 camera/action 运行时扰动评测。
 
 **完整说明：[数据下载、环境准备与转换指南](docs/libero_data_preparation.md)。**
+
+**评测说明：[资源下载 → 训练格式转换 → 模型评测与结果解读](docs/libero_evaluation.md)。**
 
 ## 功能
 
@@ -12,18 +14,27 @@
 - Action：回放前插入一次 delta 偏移动作，提供三个强度等级及 star 版本。
 - 自动生成 `meta.json` 和 `generation_report.json`。
 - 提供独立的 Hugging Face 版本清单、网络路由探测和下载校验工具。
+- 独立评测入口与模型代码，保留 XVLA / MoT / IC 历史构造，支持 Plus 七类环境套件和 camera/action/star 运行时扰动。
+- 评测输出逐 episode 记录、macro/micro 成功率、代码来源与完成/失败 manifest。
 
 ## 仓库结构
 
 ```text
 scripts/prepare_libero_data.py    # 自包含转换入口；不导入原训练仓库
+scripts/evaluate_libero.py       # 独立评测入口；调用本仓库 evaluation/ 和 models/
+evaluation/                     # 模型推理、仿真 rollout、扰动、结果记录
+models/                         # 从当前 XVLA 项目抽出的模型/processor 源码
 requirements.txt               # numpy / h5py
 requirements-download.txt      # 可选下载工具依赖
+requirements-eval.txt          # 可选模型评测依赖，仿真依赖另行准备
 tools/hf_manifest.py            # 解析固定版本、枚举文件
 tools/probe_route.py            # 小范围下载探测
 tools/verify_snapshot.py        # 文件大小、LFS SHA256 与未完成文件检查
 docs/libero_data_preparation.md # 中文完整说明
+docs/libero_evaluation.md       # 下载、转换、评测命令、协议和结果文件
+docs/evaluation_source_manifest.json # 原评测/模型源码的 SHA256
 tests/test_prepare_libero_data.py
+tests/test_evaluation_*.py
 ```
 
 ## 安装与依赖
@@ -68,6 +79,23 @@ python scripts/prepare_libero_data.py meta \
 
 输入可以是一个原始任务 HDF5、一个 suite 目录或数据根目录。根目录会递归处理所有 `*_demo.hdf5`；`--suite` 是覆盖推断的参数，不是 suite 过滤器。输出目录必须为空或不存在。
 
+## 评测示例
+
+先按 [评测指南](docs/libero_evaluation.md#4-评测环境和模型准备) 配置独立环境、模型资源和 LIBERO-Plus assets，再做一个任务、一个 episode 的 smoke：
+
+```bash
+.venv/bin/python scripts/evaluate_libero.py \
+  --model_path /path/to/checkpoint \
+  --libero_root /path/to/LIBERO-plus \
+  --sim libero --task_suites libero_spatial \
+  --episodes 1 --max_tasks 1 --save_video \
+  --output_dir evaluation_outputs/base-smoke
+```
+
+仅运行 camera++ 扰动时，改用 `--sim libero_plus --perturbation camera_plusplus --runtime_perturbations none`。仅测 action 时将 perturbation 换为 `action`，并用 `--perturbation_level 1/2/3` 控制强度。完整四 suite 和 Plus 七类 suite 的命令见评测指南。
+
+评测读取 checkpoint、BDDL、初始状态和环境资产，不读取训练 HDF5。Plus 默认额外在四个原始 suites 上跑 camera++ 和 action；只测指定 suite 时显式使用 `--runtime_perturbations none`。输出根目录下按 checkpoint 名创建子目录，要求该实际目录为空；结果查看 `run_manifest.json` 和 `summary.json`。
+
 ## 输出约定
 
 每条成功轨迹写一个 HDF5；执行 N 个有效动作后：
@@ -94,10 +122,10 @@ python scripts/prepare_libero_data.py meta \
 ## 验证
 
 ```bash
-python -m unittest discover -s tests -v
-python -m compileall -q scripts tools tests
+USE_TF=0 python -m unittest discover -s tests -v
+python -m compileall -q scripts tools tests evaluation models
 ```
 
-测试使用模拟环境对象验证回放顺序、图像翻转、no-op/夹爪处理、结束条件和 HDF5/metadata 契约，不需要 GPU、LIBERO 或 robosuite。真实 MuJoCo 端到端回放尚未验证，正式使用前应先做单任务 smoke。
+14 项离线测试覆盖转换契约、IC 历史隔离、action chunk / 夹爪阈值、评测配置与结果统计，不需要 GPU、LIBERO 或 robosuite。模型测试需要 torch/transformers，基础环境会跳过这三项。真实 MuJoCo 回放及加载实际 checkpoint 的闭环评测尚未验证；共享仿真环境的日志权限诊断见评测指南，正式使用前应先做单任务 smoke。
 
 本仓库由 `x_vla_ic` 中整理的独立脚本与说明拆出，不包含数据、模型权重或原训练项目的运行目录。上游 LIBERO/Plus 的代码和数据继续遵循各自授权。
