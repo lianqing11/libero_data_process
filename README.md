@@ -2,9 +2,24 @@
 
 将原始 LIBERO demonstration 转换为双视角、绝对动作轨迹的训练 HDF5，生成 LIBERO-Plus camera/action 等扰动数据，并使用本地 VLA checkpoint 运行普通 LIBERO、Plus suites 和 camera/action 运行时扰动评测。
 
+本项目重点覆盖 **LIBERO-Plus，以及我们设计的 LIBERO-Plus-Hard 相关 camera/action 扰动评测**。普通 LIBERO 保留为基线和运行时扰动的基础任务集合。
+
 **完整说明：[数据下载、环境准备与转换指南](docs/libero_data_preparation.md)。**
 
 **评测说明：[资源下载 → 训练格式转换 → 模型评测与结果解读](docs/libero_evaluation.md)。**
+
+## LIBERO-Plus / LIBERO-Plus-Hard 覆盖范围
+
+| 内容 | 当前仓库支持 |
+|---|---|
+| LIBERO-Plus 七类环境扰动 | camera、robot、language、light、background、noise、layout |
+| 自定义增强扰动 | `camera_plusplus`、`action`，action 支持 level 1/2/3 |
+| 更强的 star 扰动 | `camera_star`、`camera_plusplus_star`、`action_star` |
+| `libero-plus-hard` 统一预设 | 尚未定义；用明确的扰动参数选择上述实现 |
+
+**hard 的相关扰动代码已包含；hard 对应的固定套件组合、强度和汇总口径尚未命名为一个统一协议。** 当前不要把 `libero-plus-hard` 当作可直接传入的 `--sim` 或 `--task_suites` 值，也不要默认把 hard 等同于 star。两组已有实现的范围、参数和完整命令见 [评测指南：Plus 与 hard 的对应关系](docs/libero_evaluation.md#plus-hard-scope)。
+
+`--sim libero_plus` 默认运行七类 Plus suites，并额外在四个普通 base suites 上分别测 `camera_plusplus` 和 `action`；**star 默认关闭**。多个 runtime 参数表示分别运行多个 pass，当前没有在同一 episode 中联合叠加 camera 和 action 的入口。仅测 Plus 七类时使用 `--runtime_perturbations none`。
 
 ## 功能
 

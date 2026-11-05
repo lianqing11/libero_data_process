@@ -1,6 +1,35 @@
-# LIBERO / LIBERO-Plus：下载、训练格式转换与模型评测
+# LIBERO-Plus 与自定义 Hard 扰动：下载、训练格式转换与模型评测
 
 本指南对应独立仓库 `libero_data_process`，整理日期为 2026-11-05。转换入口是 [`scripts/prepare_libero_data.py`](../scripts/prepare_libero_data.py)，评测入口是 [`scripts/evaluate_libero.py`](../scripts/evaluate_libero.py)。所有命令在仓库根目录执行。
+
+<a id="plus-hard-scope"></a>
+
+## 重点：LIBERO-Plus 与 LIBERO-Plus-Hard 的对应关系
+
+本仓库的主要评测对象是 LIBERO-Plus 和我们设计的 hard 相关 camera/action 扰动。普通 LIBERO 用于基线及自定义运行时扰动的基础任务。**Plus 和 hard 相关扰动实现都已带入独立仓库；`libero-plus-hard` 的统一评测预设尚未定义。**
+
+代码中已有两组自定义实现：`camera_plusplus` / `action`，以及更强的 `camera_plusplus_star` / `action_star`，另有只增强外部相机的 `camera_star`。目前尚未确认项目名称 `LIBERO-Plus-Hard` 最终指哪组扰动、哪些 suites 和强度；本文分别写出已有实现，不将任意一组擅自定义为 hard 标准协议。结果报告应记录实际参数，不能只写一个 hard 名称。
+
+| 评测内容 | 实际入口或参数 | 覆盖及默认行为 |
+|---|---|---|
+| LIBERO-Plus 七类环境扰动 | `--sim libero_plus` + 七个 `libero_plus_*` suites | camera、robot、language、light、background、noise、layout |
+| 自定义 camera++ | `camera_plusplus` | 外部相机变化 + wrist flip / FOV；默认额外 runtime pass 之一 |
+| 自定义 action | `action` + `--perturbation_level 1/2/3` | 每一步绝对动作施加固定标定偏置；默认额外 runtime pass 之一 |
+| 更强外部相机 | `camera_star` | 已包含，默认关闭 |
+| 更强 camera++ | `camera_plusplus_star` | 已包含，默认关闭 |
+| 更强 action | `action_star` + `--perturbation_level 1/2/3` | 已包含，默认关闭 |
+| 名为 `libero-plus-hard` 的固定协议 | 暂无该 `--sim` / suite 名称或一键 preset | 套件组合、强度、统一汇总口径尚未固定为此名称 |
+
+实际默认值和组合方式：
+
+- `--sim libero_plus` 不指定 suites / runtime 参数：先评测 Plus 七类，再对四个普通 base suites 分别评测 camera++ 和 action。
+- `--runtime_perturbations none`：关闭额外 runtime passes，适用于只评测 Plus 七类或指定 suite。
+- `--runtime_perturbations camera_plusplus_star action_star`：额外运行两个 star passes，**分别评测，当前没有同一 episode 联合叠加 camera 和 action 的入口**。
+- runtime passes 固定使用 `libero_spatial`、`libero_goal`、`libero_object`、`libero_10`，不将 star 自动叠加到七类 Plus 环境之上。使用 `--perturbation <单种类型> --runtime_perturbations none` 时，才是只对当前指定 suites 施加这一种扰动。
+
+相关代码：[Plus rollout](../evaluation/libero/libero_plus_client.py)、[camera/action 扰动实现](../evaluation/libero/runtime_perturbations.py)、[默认值与评测编排](../evaluation/scripts/evaluate_libero.py)。第 5.3 节给出纯 Plus 命令，第 5.5 节给出两组自定义扩展命令。
+
+hard 相关运行时扰动复用 Plus 代码、BDDL、初始状态和 assets，当前实现不需要额外下载一个名为 `libero-plus-hard` 的数据包。模型仍需单独准备。camera/action 参数在评测时采样并应用；训练 HDF5 的生成与其语义差异见第 6 节。
 
 ## 1. 整个流程及资源来源
 
@@ -192,6 +221,51 @@ export VLA_MODEL_ROOTS=/VLA-Data/scripts/lianqing/checkpoints
 `--perturbation` 只给当前 `--task_suites` 加一种扰动；必须同时指定 `--runtime_perturbations none`，避免意外叠加额外评测 passes。运行时扰动要求 `--sim libero_plus --act_type abs`。
 
 `--runtime_perturbations camera_plusplus action` 会在当前 suites 评测完成后，额外对**四个原始 base suites** 分别跑 camera++ 和 action。此额外 suite 列表固定，与 `--task_suites` 无关。`--sim libero_plus` 不指定该参数时，默认就是这两个额外 passes。`all` 包含 camera_star、camera_plusplus、camera_plusplus_star、action、action_star；`none` 关闭额外 passes。每种实验要用不同输出目录。
+
+### 5.5 Plus 加自定义增强 / star 扩展
+
+以下两条命令明确列出 suites 和扰动类型，分别使用独立输出目录。它们是现有实现的可执行组合，不代表已确定 `LIBERO-Plus-Hard` 的唯一协议。
+
+```bash
+# Plus 七类 + camera++ / action（分别在四个普通 base suites 上评测）
+.venv/bin/python scripts/evaluate_libero.py \
+  --model_path "$CHECKPOINT" --libero_root "$LIBERO_PLUS_ROOT" \
+  --sim libero_plus \
+  --task_suites libero_plus_camera libero_plus_robot libero_plus_language \
+                libero_plus_light libero_plus_background libero_plus_noise libero_plus_layout \
+  --runtime_perturbations camera_plusplus action \
+  --perturbation_level 2 --act_type abs --episodes 10 --seed 42 \
+  --output_dir evaluation_outputs/plus-with-camera-pp-action-lv2
+
+# Plus 七类 + 更强的 camera++ star / action star（两个独立 pass）
+.venv/bin/python scripts/evaluate_libero.py \
+  --model_path "$CHECKPOINT" --libero_root "$LIBERO_PLUS_ROOT" \
+  --sim libero_plus \
+  --task_suites libero_plus_camera libero_plus_robot libero_plus_language \
+                libero_plus_light libero_plus_background libero_plus_noise libero_plus_layout \
+  --runtime_perturbations camera_plusplus_star action_star \
+  --perturbation_level 2 --act_type abs --episodes 10 --seed 42 \
+  --output_dir evaluation_outputs/plus-with-camera-pp-star-action-star-lv2
+```
+
+这里只填写了作为示例的 action level 2；它不是 hard 的既定强度。`--perturbation_level` 作用于 action / action_star，camera 参数范围由具体扰动类决定：
+
+| 参数范围 | `camera_plusplus` | `camera_plusplus_star` |
+|---|---|---|
+| 外部相机水平角 | −75° 至 75° | −90° 至 90° |
+| 外部相机垂直角 | 0° 至 15° | 0° 至 30° |
+| 相机距离缩放 | 1.0–2.0 | 1.0–2.5 |
+| 两个 endpoint 旋转参数 | 各 −10° 至 10° | 各 −20° 至 20° |
+| wrist FOV | 60°–90° | 50°–100° |
+| wrist flip 候选 | none / hflip / vflip / rotate180 | 相同候选 |
+
+| action 强度 | `action`：每轴位置范围 / 旋转角范围 | `action_star`：每轴位置范围 / 旋转角范围 |
+|---|---|---|
+| level 1 | ±5 mm / ±1° | ±15 mm / ±5° |
+| level 2 | ±10 mm / ±3° | ±30 mm / ±10° |
+| level 3 | ±20 mm / ±6° | ±50 mm / ±15° |
+
+查看结果时，`summary.json` 的 `dataset` 保存 Plus suites，`runtime.camera_plusplus` / `runtime.action` 或相应 star 键分别保存额外结果。当前不输出一个合并的 `hard_score`，比较实验时应对齐 suite、任务子集、episodes、seed、扰动名、level 和各项汇总权重。
 
 ## 6. 评测执行协议与训练扰动的区别
 
